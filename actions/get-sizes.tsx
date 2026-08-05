@@ -1,11 +1,31 @@
+import { db } from "@/lib/firebase";
 import { Size } from "@/types";
 
-const URL=`${process.env.NEXT_PUBLIC_API_URL}/sizes`;
+const STORE_ID = process.env.STORE_ID!;
 
 const getSizes = async (): Promise<Size[]> => {
-  const res = await fetch(URL);
+    try {
+        const sizesSnapshot = await db
+            .collection('stores')
+            .doc(STORE_ID)
+            .collection('sizes')
+            .orderBy('createdAt', 'desc')
+            .get();
 
-  return res.json();
+        const sizes: Size[] = sizesSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                name: data.name,
+                value: data.value
+            };
+        });
+
+        return sizes;
+    } catch (error) {
+        console.warn('Error fetching sizes:', error);
+        return [];
+    }
 };
 
 export default getSizes;
